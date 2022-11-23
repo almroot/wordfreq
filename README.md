@@ -8,7 +8,7 @@ To compile the project run: `go build -o bin/wordfreq ./main`.
 
 ## Usage
 
-The description of `--help` as of 2022-11-22:
+The description of `--help` as of 2022-11-23:
 
 ```
 Usage:
@@ -28,14 +28,14 @@ Pre-Processing:
       --pre-exclude-regex=  Regex pattern of included matches
 
 Processing:
-      --order=              The order in which directives are carried out (default: EDSfaE)
+      --order=              The order in which directives are carried out, see supported opcodes below (default: EfaDSfaE)
   -e                        Trims whitespaces before and after the string
   -a=                       Characters to remove from the prefix
   -f=                       Characters to remove from the suffix
   -d=                       Cuts the string based on the delimiter(s) and keep the prefix
   -s=                       Cuts the string based on the delimiter(s) and keep the suffix
-  -l=                       Normalizes the string to lowercase
-  -u=                       Normalizes the string to uppercase
+  -l                        Normalizes the string to lowercase
+  -u                        Normalizes the string to uppercase
 
 Post-Processing:
       --post-include-glob=  Glob pattern of included matches
@@ -46,7 +46,7 @@ Post-Processing:
       --value-suffix=       A set of strings to append to the final string
       --results-max=        The amount of results to return
       --results-freq=       The cut off rate on frequency for which we will abort
-      --csv                 Produces a CSV with frequency and word
+      --csv                 Produces a CSV separated by tab, having the frequency and word
 
 Help Options:
   -h, --help                Show this help message
