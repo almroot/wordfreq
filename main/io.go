@@ -127,7 +127,15 @@ func aggregate(files []string, opts *Options, stderr *os.File) (map[string]float
 				} else if !isWantedRegex(fixed, opts.After.RegexInclude, opts.After.RegexExclude) {
 					continue
 				}
-				output[fixed] += score
+
+				// We may be more interested in certain words...
+				subscore := score
+				for g, factor := range opts.After.GlobsBias {
+					if g.Match(fixed) {
+						subscore *= factor
+					}
+				}
+				output[fixed] += subscore
 			}
 		}
 

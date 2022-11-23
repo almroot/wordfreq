@@ -64,6 +64,7 @@ type OptionsDuring struct {
 type OptionsAfter struct {
 	GlobsInclude []glob.Glob
 	GlobsExclude []glob.Glob
+	GlobsBias    map[glob.Glob]float64
 	RegexInclude []*regexp.Regexp
 	RegexExclude []*regexp.Regexp
 	IncludeGlob  string  `long:"post-include-glob" description:"Glob pattern of included matches"`
@@ -74,6 +75,7 @@ type OptionsAfter struct {
 	ValueSuffix  string  `long:"value-suffix" description:"A set of strings to append to the final string"`
 	ResultsMax   int     `long:"results-max" description:"The amount of results to return"`
 	ResultsFreq  float64 `long:"results-freq" description:"The cut off rate on frequency for which we will abort"`
+	WordBias     string  `long:"word-bias" description:"A comma-separated string of factor:glob, the factor modifies the default score of 1"`
 	CSV          bool    `long:"csv" description:"Produces a CSV separated by tab, having the frequency and word"`
 }
 
@@ -89,7 +91,9 @@ func NewOptions() *Options {
 		Process: &OptionsDuring{
 			Order: "EfaDSfaE",
 		},
-		After: &OptionsAfter{},
+		After: &OptionsAfter{
+			WordBias: "1.0:*",
+		},
 	}
 }
 
@@ -275,5 +279,21 @@ func (x *OptionsAfter) Parse(o *Options) error {
 	}
 	x.RegexInclude = includeRegex
 	x.RegexExclude = excludeRegex
+	x.GlobsBias = make(map[glob.Glob]float64)
+	for _, c := range strings.Split(x.WordBias, ",") {
+		k, v, found := strings.Cut(c, ":")
+		if !found {
+			return errors.New("lacking colon")
+		}
+		var factor float64
+		var instance glob.Glob
+		if factor, err = strconv.ParseFloat(k, 64); err != nil {
+			return err
+		} else if instance, err = glob.Compile(v); err != nil {
+			return err
+		} else {
+			x.GlobsBias[instance] = factor
+		}
+	}
 	return nil
 }
