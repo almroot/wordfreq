@@ -2,6 +2,10 @@
 
 This tool is made to aggregate, filter and process a set of wordlists.
 
+## Compilation
+
+To compile the project run: `go build -o bin/wordfreq ./main`.
+
 ## Usage
 
 The description of `--help` as of 2022-11-22:
@@ -46,4 +50,63 @@ Post-Processing:
 
 Help Options:
   -h, --help                Show this help message
+```
+
+### Example
+
+```
+almroot@x:/tmp/words$ ls
+list1.txt  list2.txt
+
+almroot@x:/tmp/words$ cat list1.txt 
+index.php
+index.aspx
+blog/article.php
+.htaccess
+/admin/
+/console/
+
+almroot@x:/tmp/words$ cat list2.txt 
+/api/v1/healthcheck
+/api/v2/
+/index.php
+/index.html
+/index.aspx
+
+almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/
+2       index.php
+2       index.aspx
+1       .htaccess
+1       api/v1/healthcheck
+1       blog/article.php
+1       admin/
+1       console/
+1       api/v2/
+1       index.html
+
+almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/
+2       api
+2       index.php
+2       index.aspx
+1       index.html
+1       blog
+1       .htaccess
+1       admin
+1       console
+
+almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/ --value-prefix=/
+2       /api
+2       /index.php
+2       /index.aspx
+1       /.htaccess
+1       /admin
+1       /console
+1       /index.html
+1       /blog
+
+almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/ --value-prefix=/ --post-include-regex=\\.
+2       /index.php
+2       /index.aspx
+1       /.htaccess
+1       /index.html
 ```

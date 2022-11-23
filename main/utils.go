@@ -8,7 +8,7 @@ import (
 	"github.com/gobwas/glob"
 )
 
-func ParseGlobs(directive string) ([]glob.Glob, error) {
+func parseGlobs(directive string) ([]glob.Glob, error) {
 	const special = "*?{["
 	if directive == "" {
 		return nil, nil
@@ -34,7 +34,7 @@ func ParseGlobs(directive string) ([]glob.Glob, error) {
 	return out, nil
 }
 
-func ParseRegex(directive string) ([]*regexp.Regexp, error) {
+func parseRegex(directive string) ([]*regexp.Regexp, error) {
 	if directive == "" {
 		return nil, nil
 	}

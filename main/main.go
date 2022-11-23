@@ -29,22 +29,23 @@ func main() {
 	}
 
 	// Gather the words based on frequency
-	words, err := aggregate(files, opts)
+	words, err := aggregate(files, opts, stderr)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Sort the final words on frequency and do the final post-processing steps,
+	// i.e; respect the cut-off directives.
 	var counter int
 	for _, p := range sortByWordCount(words) {
 		if opts.After.ResultsFreq > 0 && p.Value < opts.After.ResultsFreq {
 			break
 		}
-		for _, fixed := range expand(opts, p.Key) {
-			if opts.After.CSV {
-				fmt.Printf("%d\t%s\n", p.Value, fixed)
-			} else {
-				fmt.Println(fixed)
-			}
+		if opts.After.CSV {
+			fmt.Printf("%d\t%s\n", p.Value, p.Key)
+		} else {
+			fmt.Println(p.Key)
 		}
 		counter++
 		if opts.After.ResultsMax > 0 && counter > opts.After.ResultsMax {

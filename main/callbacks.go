@@ -1,8 +1,10 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
-func CallbackTrimSpace(opts *Options, line string) (string, error) {
+func CallbackTrimSpace(_ *Options, line string) (string, error) {
 	return strings.TrimSpace(line), nil
 }
 
@@ -39,17 +41,17 @@ func CallbackCutLeft(opts *Options, line string) (string, error) {
 	if opts.Process.CutLeft != "" {
 		for _, c := range strings.Split(opts.Process.CutLeft, ",") {
 			if strings.Contains(line, c) {
-				line = line[:strings.Index(line, c)]
+				line = line[:strings.LastIndex(line, c)]
 			}
 		}
 	}
 	return line, nil
 }
 
-func CallbackCaseLower(opts *Options, line string) (string, error) {
+func CallbackCaseLower(_ *Options, line string) (string, error) {
 	return strings.ToLower(line), nil
 }
 
-func CallbackCaseUpper(opts *Options, line string) (string, error) {
+func CallbackCaseUpper(_ *Options, line string) (string, error) {
 	return strings.ToUpper(line), nil
 }

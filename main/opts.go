@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/gobwas/glob"
 
@@ -47,14 +48,14 @@ type OptionsBefore struct {
 
 type OptionsDuring struct {
 	Callbacks []func(opts *Options, line string) (string, error)
-	Order     string `long:"order" description:"The order in which directives are carried out"`
+	Order     string `long:"order" description:"The order in which directives are carried out, see supported opcodes below"`
 	TrimSpace bool   `short:"e" description:"Trims whitespaces before and after the string"`
 	TrimLeft  string `short:"a" description:"Characters to remove from the prefix"`
 	TrimRight string `short:"f" description:"Characters to remove from the suffix"`
 	CutLeft   string `short:"d" description:"Cuts the string based on the delimiter(s) and keep the prefix"`
 	CutRight  string `short:"s" description:"Cuts the string based on the delimiter(s) and keep the suffix"`
-	CaseLower string `short:"l" description:"Normalizes the string to lowercase"`
-	CaseUpper string `short:"u" description:"Normalizes the string to uppercase"`
+	CaseLower bool   `short:"l" description:"Normalizes the string to lowercase"`
+	CaseUpper bool   `short:"u" description:"Normalizes the string to uppercase"`
 }
 
 type OptionsAfter struct {
@@ -70,7 +71,7 @@ type OptionsAfter struct {
 	ValueSuffix  string `long:"value-suffix" description:"A set of strings to append to the final string"`
 	ResultsMax   int    `long:"results-max" description:"The amount of results to return"`
 	ResultsFreq  int    `long:"results-freq" description:"The cut off rate on frequency for which we will abort"`
-	CSV          bool   `long:"csv" description:"Produces a CSV with frequency and word"`
+	CSV          bool   `long:"csv" description:"Produces a CSV separated by tab, having the frequency and word"`
 }
 
 func NewOptions() *Options {
@@ -82,7 +83,7 @@ func NewOptions() *Options {
 		},
 		Before: &OptionsBefore{},
 		Process: &OptionsDuring{
-			Order: "EDSfaE",
+			Order: "EfaDSfaE",
 		},
 		After: &OptionsAfter{},
 	}
@@ -149,11 +150,11 @@ func (x *OptionsInput) Parse(o *Options) error {
 		const msg = "not a directory"
 		return errors.New(msg)
 	}
-	include, err := ParseGlobs(x.Include)
+	include, err := parseGlobs(x.Include)
 	if err != nil {
 		return err
 	}
-	exclude, err := ParseGlobs(x.Exclude)
+	exclude, err := parseGlobs(x.Exclude)
 	if err != nil {
 		return err
 	}
@@ -163,21 +164,21 @@ func (x *OptionsInput) Parse(o *Options) error {
 }
 
 func (x *OptionsBefore) Parse(o *Options) error {
-	includeGlob, err := ParseGlobs(x.IncludeGlob)
+	includeGlob, err := parseGlobs(x.IncludeGlob)
 	if err != nil {
 		return err
 	}
-	excludeGlob, err := ParseGlobs(x.ExcludeGlob)
+	excludeGlob, err := parseGlobs(x.ExcludeGlob)
 	if err != nil {
 		return err
 	}
 	x.GlobsInclude = includeGlob
 	x.GlobsExclude = excludeGlob
-	includeRegex, err := ParseRegex(x.IncludeRegex)
+	includeRegex, err := parseRegex(x.IncludeRegex)
 	if err != nil {
 		return err
 	}
-	excludeRegex, err := ParseRegex(x.ExcludeRegex)
+	excludeRegex, err := parseRegex(x.ExcludeRegex)
 	if err != nil {
 		return err
 	}
@@ -187,6 +188,15 @@ func (x *OptionsBefore) Parse(o *Options) error {
 }
 
 func (x *OptionsDuring) Parse(o *Options) error {
+	if x.CaseUpper && !strings.ContainsAny(x.Order, "uU") {
+		x.Order += "l"
+	}
+	if x.CaseUpper && !strings.ContainsAny(x.Order, "uU") {
+		x.Order += "u"
+	}
+	if x.TrimSpace && !strings.ContainsAny(x.Order, "eE") {
+		x.Order += "e"
+	}
 	for idx, d := range x.Order {
 		switch d {
 		case 'e':
@@ -196,27 +206,27 @@ func (x *OptionsDuring) Parse(o *Options) error {
 		case 'a':
 			x.Callbacks = append(x.Callbacks, CallbackTrimLeft)
 		case 'A':
-			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackTrimLeft).callback)
+			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackTrimLeft).Callback)
 		case 'f':
 			x.Callbacks = append(x.Callbacks, CallbackTrimRight)
 		case 'F':
-			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackTrimRight).callback)
+			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackTrimRight).Callback)
 		case 's':
 			x.Callbacks = append(x.Callbacks, CallbackCutRight)
 		case 'S':
-			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCutRight).callback)
+			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCutRight).Callback)
 		case 'd':
 			x.Callbacks = append(x.Callbacks, CallbackCutLeft)
 		case 'D':
-			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCutLeft).callback)
+			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCutLeft).Callback)
 		case 'l':
 			x.Callbacks = append(x.Callbacks, CallbackCaseLower)
 		case 'L':
-			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCaseLower).callback)
+			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCaseLower).Callback)
 		case 'u':
 			x.Callbacks = append(x.Callbacks, CallbackCaseUpper)
 		case 'U':
-			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCaseUpper).callback)
+			x.Callbacks = append(x.Callbacks, NewEnsure(CallbackCaseUpper).Callback)
 		default:
 			return fmt.Errorf("unrecognized directive 0x%x", x.Order[idx])
 		}
@@ -225,21 +235,21 @@ func (x *OptionsDuring) Parse(o *Options) error {
 }
 
 func (x *OptionsAfter) Parse(o *Options) error {
-	includeGlob, err := ParseGlobs(x.IncludeGlob)
+	includeGlob, err := parseGlobs(x.IncludeGlob)
 	if err != nil {
 		return err
 	}
-	excludeGlob, err := ParseGlobs(x.ExcludeGlob)
+	excludeGlob, err := parseGlobs(x.ExcludeGlob)
 	if err != nil {
 		return err
 	}
 	x.GlobsInclude = includeGlob
 	x.GlobsExclude = excludeGlob
-	includeRegex, err := ParseRegex(x.IncludeRegex)
+	includeRegex, err := parseRegex(x.IncludeRegex)
 	if err != nil {
 		return err
 	}
-	excludeRegex, err := ParseRegex(x.ExcludeRegex)
+	excludeRegex, err := parseRegex(x.ExcludeRegex)
 	if err != nil {
 		return err
 	}

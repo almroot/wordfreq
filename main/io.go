@@ -20,7 +20,7 @@ func findFiles(opts *Options) ([]string, error) {
 			return nil
 		}
 
-		// Find the base path of the wordlist...
+		// Find the base path of the filename...
 		base, err := filepath.Rel(opts.Input.Wordlist, path)
 		if err != nil {
 			return nil
@@ -79,9 +79,11 @@ func isWantedRegex(data string, include, exclude []*regexp.Regexp) bool {
 	return doInclude
 }
 
-func aggregate(files []string, opts *Options) (map[string]int, error) {
+func aggregate(files []string, opts *Options, stderr *os.File) (map[string]int, error) {
 	var output = make(map[string]int)
 	for _, f := range files {
+
+		// Open the file having many words and start iterating line-by-line.
 		file, err := os.Open(f)
 		if err != nil {
 			return output, err
@@ -90,27 +92,42 @@ func aggregate(files []string, opts *Options) (map[string]int, error) {
 		var scanner = bufio.NewScanner(file)
 		for scanner.Scan() {
 			line = scanner.Text()
+
+			// Start with the pre-processing directives...
 			if !isWantedGlob(line, opts.Before.GlobsInclude, opts.Before.GlobsExclude) {
 				continue
 			} else if !isWantedRegex(line, opts.Before.RegexInclude, opts.Before.RegexExclude) {
 				continue
 			}
+
+			// Then we iterate over the given callbacks following the --order flag.
 			for _, cb := range opts.Process.Callbacks {
 				if line, err = cb(opts, line); err != nil {
-					_, _ = fmt.Fprintf(os.Stderr, "error processing: \"%s\" because: %v", strconv.Quote(line), err)
+					const msg = "error processing: \"%s\" because: %v"
+					_, _ = fmt.Fprintf(stderr, msg, strconv.Quote(line), err)
 					break
 				}
 			}
-			if err == nil {
-				if !isWantedGlob(line, opts.After.GlobsInclude, opts.After.GlobsExclude) {
+			if err != nil {
+				continue
+			}
+
+			// Finally we do the (most significant) post-processing steps
+			for _, fixed := range expand(opts, line) {
+				if !isWantedGlob(fixed, opts.After.GlobsInclude, opts.After.GlobsExclude) {
 					continue
-				} else if !isWantedRegex(line, opts.After.RegexInclude, opts.After.RegexExclude) {
+				} else if !isWantedRegex(fixed, opts.After.RegexInclude, opts.After.RegexExclude) {
 					continue
 				}
-				output[line]++
+				output[fixed]++
 			}
 		}
-		_ = file.Close()
+
+		// Close the file handle once we are done reading.
+		if err = file.Close(); err != nil {
+			const msg = "error closing file %s: %v"
+			_, _ = fmt.Fprintf(stderr, msg, f, err)
+		}
 	}
 	return output, nil
 }
