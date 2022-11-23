@@ -112,3 +112,9 @@ almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/ --val
 1.00    /.htaccess
 1.00    /index.html
 ```
+
+## Globbing
+
+Many directives support globs. The implementation of globs is by using [github.com/gobwas/glob](https://github.com/gobwas/glob).
+
+> The syntax is inspired by [standard wildcards](http://tldp.org/LDP/GNU-Linux-Tools-Summary/html/x11655.htm), except that `**` is aka super-asterisk, that do not sensitive for separators.
