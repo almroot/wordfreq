@@ -2,7 +2,7 @@ package main
 
 import "sort"
 
-func sortByWordCount(wordFrequencies map[string]int) PairList {
+func sortByWordCount(wordFrequencies map[string]float64) PairList {
 	pl := make(PairList, len(wordFrequencies))
 	i := 0
 	for k, v := range wordFrequencies {
@@ -15,7 +15,7 @@ func sortByWordCount(wordFrequencies map[string]int) PairList {
 
 type Pair struct {
 	Key   string
-	Value int
+	Value float64
 }
 
 type PairList []Pair

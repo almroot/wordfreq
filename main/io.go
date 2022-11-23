@@ -79,9 +79,17 @@ func isWantedRegex(data string, include, exclude []*regexp.Regexp) bool {
 	return doInclude
 }
 
-func aggregate(files []string, opts *Options, stderr *os.File) (map[string]int, error) {
-	var output = make(map[string]int)
+func aggregate(files []string, opts *Options, stderr *os.File) (map[string]float64, error) {
+	var output = make(map[string]float64)
 	for _, f := range files {
+
+		// We need to understand the weight of this file. It is modified by the bias factors.
+		var score float64 = 1
+		for g, factor := range opts.Input.GlobsBias {
+			if g.Match(f) {
+				score *= factor
+			}
+		}
 
 		// Open the file having many words and start iterating line-by-line.
 		file, err := os.Open(f)
@@ -119,7 +127,7 @@ func aggregate(files []string, opts *Options, stderr *os.File) (map[string]int, 
 				} else if !isWantedRegex(fixed, opts.After.RegexInclude, opts.After.RegexExclude) {
 					continue
 				}
-				output[fixed]++
+				output[fixed] += score
 			}
 		}
 

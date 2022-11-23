@@ -43,7 +43,7 @@ func main() {
 			break
 		}
 		if opts.After.CSV {
-			fmt.Printf("%d\t%s\n", p.Value, p.Key)
+			fmt.Printf("%.2f\t%s\n", p.Value, p.Key)
 		} else {
 			fmt.Println(p.Key)
 		}
