@@ -20,6 +20,7 @@ Input:
   -l, --list                List the files that are to be processed
       --include=            Glob pattern of relative file names to include
       --exclude=            Glob pattern of relative file names to exclude (default: .git)
+      --bias=               A comma-separated string of factor:glob, the factor modifies the default score of 1 (default: 1.0:*)
 
 Pre-Processing:
       --pre-include-glob=   Glob pattern of included matches
@@ -46,6 +47,7 @@ Post-Processing:
       --value-suffix=       A set of strings to append to the final string
       --results-max=        The amount of results to return
       --results-freq=       The cut off rate on frequency for which we will abort
+      --word-bias=          A comma-separated string of factor:glob, the factor modifies the default score of 1 (default: 1.0:*)
       --csv                 Produces a CSV separated by tab, having the frequency and word
 
 Help Options:
@@ -74,39 +76,39 @@ almroot@x:/tmp/words$ cat list2.txt
 /index.aspx
 
 almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/
-2       index.php
-2       index.aspx
-1       .htaccess
-1       api/v1/healthcheck
-1       blog/article.php
-1       admin/
-1       console/
-1       api/v2/
-1       index.html
+2.00    index.aspx
+2.00    index.php
+1.00    blog/article.php
+1.00    admin/
+1.00    console/
+1.00    api/v1/healthcheck
+1.00    api/v2/
+1.00    index.html
+1.00    .htaccess
 
 almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/
-2       api
-2       index.php
-2       index.aspx
-1       index.html
-1       blog
-1       .htaccess
-1       admin
-1       console
+2.00    index.aspx
+2.00    api
+2.00    index.php
+1.00    blog
+1.00    .htaccess
+1.00    admin
+1.00    console
+1.00    index.html
 
 almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/ --value-prefix=/
-2       /api
-2       /index.php
-2       /index.aspx
-1       /.htaccess
-1       /admin
-1       /console
-1       /index.html
-1       /blog
+2.00    /index.php
+2.00    /index.aspx
+2.00    /api
+1.00    /blog
+1.00    /.htaccess
+1.00    /admin
+1.00    /console
+1.00    /index.html
 
 almroot@x:~(main)$ wordfreq -w /tmp/words/ --csv --include=*.txt -a=/ -d=/ --value-prefix=/ --post-include-regex=\\.
-2       /index.php
-2       /index.aspx
-1       /.htaccess
-1       /index.html
+2.00    /index.php
+2.00    /index.aspx
+1.00    /.htaccess
+1.00    /index.html
 ```
